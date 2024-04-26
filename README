@@ -4,3 +4,20 @@ specifically: https://checkmk.com/support/1.5.0p23/mk-livestatus-1.5.0p23.tar.gz
 We have created this repo under the permissions granted by the GPLv2 license
 used by original author. It exists for our internal build processes and ensure
 access to the code is maintained even if upstream goes away.
+
+# How to build on Rocky Linux 9
+
+```
+# cat /etc/redhat-release
+Rocky Linux release 9.3 (Blue Onyx)
+```
+
+```
+dnf group install "Development Tools" -y
+dnf config-manager --set-enabled crb -y
+dnf install epel-release -y
+dnf install rrdtool-devel boost-devel libstdc++-static-11.4.1-2.1.el9.x86_64 -y
+autoreconf && ./configure --with-nagios4 && make -j8
+make install
+```
+
