@@ -21,3 +21,16 @@ autoreconf && ./configure --with-nagios4 && make -j8
 make install
 ```
 
+# How to integrate with Nagios (4.4.14)
+
+Add following line to /usr/local/nagios/etc/nagios.cfg
+
+```
+broker_module=/usr/local/lib/mk-livestatus/livestatus.o /usr/local/nagios/var/rw/live
+```
+
+```
+chown nagios /usr/local/nagios/var/rw/
+systemctl restart nagios
+```
+
