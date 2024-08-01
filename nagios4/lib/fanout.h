@@ -1,5 +1,5 @@
-#ifndef LIBNAGIOS_fanout_h__
-#define LIBNAGIOS_fanout_h__
+#ifndef LIBNAGIOS_FANOUT_H_INCLUDED
+#define LIBNAGIOS_FANOUT_H_INCLUDED
 #include "lnag-utils.h"
 
 /**
@@ -22,7 +22,7 @@ typedef struct fanout_table fanout_table;
 
 /**
  * Create a fanout table
- * @param[in] size The size of the table. Preferrably a power of 2
+ * @param[in] size The size of the table. Preferably a power of 2
  * @return Pointer to a newly created table
  */
 extern fanout_table *fanout_create(unsigned long size);
@@ -43,7 +43,7 @@ extern void fanout_destroy(fanout_table *t, void (*destructor)(void *));
  * Return a pointer from the fanout table t
  *
  * @param[in] t table to fetch from
- * @param[in] key key to fetch
+ * @param[in] key Key to fetch
  * @return NULL on errors; Pointer to data on success
  */
 extern void *fanout_get(fanout_table *t, unsigned long key);
@@ -64,7 +64,7 @@ extern int fanout_add(fanout_table *t, unsigned long key, void *data);
  * Remove an entry from the fanout table and return its data.
  *
  * @param[in] t fanout table to look in
- * @param[key] The key whose data we should locate
+ * @param[in] key The key whose data we should locate
  * @return Pointer to the data stored on success; NULL on errors
  */
 extern void *fanout_remove(fanout_table *t, unsigned long key);

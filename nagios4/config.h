@@ -30,8 +30,14 @@
 /* Event broker integration */
 #define USE_EVENT_BROKER /**/
 
+/* NERD / radio dispatch usage */
+/* #undef ENABLE_NERD */
+
+/* check for RLIMIT_PROC */
+#define DETECT_RLIMIT_PROBLEM 1
+
 /* commands used by CGIs */
-#define TRACEROUTE_COMMAND "/usr/sbin/traceroute"
+#define TRACEROUTE_COMMAND ""
 /* #undef PING_COMMAND */
 /* #undef PING_PACKETS_FIRST */
 
@@ -60,13 +66,13 @@
 
 /***** CGI COMPILE OPTIONS *****/
 /* should we compile and use the statusmap CGI? */
-/* #undef USE_STATUSMAP */
+#define USE_STATUSMAP /**/
 /* should we compile and use the statuswrl CGI? */
 #define USE_STATUSWRL /**/
 /* should we compile and use the trends CGI? */
-/* #undef USE_TRENDS */
+#define USE_TRENDS /**/
 /* should we compile and use the histogram CGI? */
-/* #undef USE_HISTOGRAM */
+#define USE_HISTOGRAM /**/
 
 
 
@@ -80,7 +86,8 @@
 #define HAVE_STRTOUL 1
 #define HAVE_INITGROUPS 1
 /* #undef HAVE_GETLOADAVG */
-/* #undef HAVE_GDIMAGECREATETRUECOLOR */
+#define HAVE_GDIMAGECREATETRUECOLOR 1
+#define HAVE_SIGACTION 1
 
 
 
@@ -141,9 +148,9 @@
 
 #define HAVE_PWD_H 1
 #ifdef HAVE_PWD_H
-#include <pwd.h>
+#include "config_pwd.h"
 #endif
- 
+
 #define HAVE_GRP_H 1
 #ifdef HAVE_GRP_H
 #include <grp.h>
@@ -192,6 +199,15 @@
 #define HAVE_STDARG_H 1
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
+#endif
+
+/* Another Solarisism: getloadavg() lives in <sys/loadavg.h>, not <stdlib.h>,
+ * so include the former if it exists. This may be true on other systems, or
+ * this function may be missing altogether (see:
+ * https://www.gnu.org/software/gnulib/manual/html_node/getloadavg.html). */
+/* #undef HAVE_SYS_LOADAVG_H */
+#ifdef HAVE_SYS_LOADAVG_H
+#include <sys/loadavg.h>
 #endif
 
 #define HAVE_SYS_TYPES_H 1
@@ -253,6 +269,8 @@
 #include <socket.h>
 #endif
 
+#define HAVE_SSL 1
+
 #define HAVE_NETINET_IN_H 1
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -301,6 +319,11 @@
 #define HAVE_WCHAR_H 1
 #ifdef HAVE_WCHAR_H
 #include <wchar.h>
+#endif
+
+#define HAVE_SYS_PRCTL_H 1
+#ifdef HAVE_SYS_PRCTL_H
+#include <sys/prctl.h>
 #endif
 
 /* configure script should allow user to override ltdl choice, but this will do for now... */

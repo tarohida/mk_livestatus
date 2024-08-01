@@ -1,8 +1,8 @@
-#ifndef INCLUDE__shared_h__
-#define INCLUDE__shared_h__
+#ifndef NAGIOS_SHARED_H_INCLUDED
+#define NAGIOS_SHARED_H_INCLUDED
 
 #include <time.h>
-#include "libnagios.h"
+#include "lib/libnagios.h"
 
 NAGIOS_BEGIN_DECL
 
@@ -35,8 +35,10 @@ struct object_count {
 
 extern struct object_count num_objects;
 
+extern void init_shared_cfg_vars(int);
 extern void timing_point(const char *fmt, ...); /* print a message and the time since the first message */
 extern char *my_strtok(char *buffer, const char *tokens);
+extern char *my_strtok_with_free(char *buffer, const char *tokens, int free_orig);
 extern char *my_strsep(char **stringp, const char *delim);
 extern mmapfile *mmap_fopen(const char *filename);
 extern int mmap_fclose(mmapfile *temp_mmapfile);
@@ -50,6 +52,8 @@ extern void get_datetime_string(time_t *raw_time, char *buffer,
                                 int buffer_length, int type);
 extern void get_time_breakdown(unsigned long raw_time, int *days, int *hours,
                                int *minutes, int *seconds);
+
+extern void ensure_path_separator(char *path, size_t size);
 
 NAGIOS_END_DECL
 #endif

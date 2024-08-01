@@ -1,14 +1,25 @@
-#ifndef LIBNAGIOS_runcmd_h__
-#define LIBNAGIOS_runcmd_h__
+#ifndef NDO_LIBNAGIOS_RUNCMD_H_INCLUDED
+#define NDO_LIBNAGIOS_RUNCMD_H_INCLUDED
 #include <signal.h>
 
 /**
  * @file runcmd.h
  * @brief runcmd library function declarations
  *
+ * A simple interface to executing programs from other programs, using an
+ * optimized and safer popen()-like implementation. It is considered safer in
+ * that no shell needs to be spawned for simple commands, and the environment
+ * passed to the execve()'d program is essentially empty.
+ *
+ * This code is based on popen.c, which in turn was taken from
+ * "Advanced Programming in the UNIX Environment" by W. Richard Stevens.
+ *
+ * Care has been taken to make sure the functions are async-safe. The exception
+ * is runcmd_init() which multithreaded applications or plugins must call in a
+ * non-reentrant manner before calling any other runcmd function.
+ *
  * @note This is inherited from the nagiosplugins project, although
- * I (AE) wrote the original code, and it might need refactoring
- * for performance later.
+ * it might need refactoring for performance later.
  * @{
  */
 
@@ -35,7 +46,8 @@
  *
  * Only multi-threaded programs that might launch the first external
  * program from multiple threads simultaneously need to bother with
- * this.
+ * this, and they must ensure this is called at least once in a non-reentrant
+ * manner before calling any other runcmd function.
  */
 extern void runcmd_init(void);
 
@@ -55,7 +67,7 @@ extern const char *runcmd_strerror(int code);
 
 /**
  * Start a command from a command string
- * @param[in] cmdstring The command to launch
+ * @param[in] cmd The command to launch
  * @param[out] pfd Child's stdout filedescriptor
  * @param[out] pfderr Child's stderr filedescriptor
  * @param[in] env Currently ignored for portability
@@ -63,8 +75,7 @@ extern const char *runcmd_strerror(int code);
  * @param[in] iobregarg The "arg" value to pass to iobroker_register()
  */
 extern int runcmd_open(const char *cmd, int *pfd, int *pfderr, char **env,
-		void (*iobreg)(int, int, void *), void *iobregarg)
-	__attribute__((__nonnull__(1, 2, 3, 5, 6)));
+		void (*iobreg)(int, int, void *), void *iobregarg);
 
 /**
  * Close a command and return its exit status
@@ -92,5 +103,14 @@ extern int runcmd_close(int fd);
  */
 extern int runcmd_cmd2strv(const char *str, int *out_argc, char **out_argv);
 
-#endif /* INCLUDE_runcmd_h__ */
+/**
+ * If you're using libnagios to execute a remote command, the 
+ * static pid_t pids is not freed after runcmd_open
+ * You can call this function when you're sure pids is no longer
+ * in use, to keep down memory leaks
+ */
+extern void runcmd_free_pids(void);
+
 /** @} */
+/* INCLUDE_runcmd_h__ */
+#endif

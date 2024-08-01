@@ -21,8 +21,8 @@
  *****************************************************************************/
 
 
-#ifndef _DOWNTIME_H
-#define _DOWNTIME_H
+#ifndef NAGIOS_DOWNTIME_H_INCLUDED
+#define NAGIOS_DOWNTIME_H_INCLUDED
 
 #include "common.h"
 #include "objects.h"
@@ -49,8 +49,8 @@ typedef struct scheduled_downtime {
 	int	start_notification_sent;
 	char *author;
 	char *comment;
-#ifndef NSCGI
 	unsigned long comment_id;
+#ifndef NSCGI
 	int start_flex_downtime;
 	int incremented_pending_downtime;
 #endif
@@ -85,6 +85,8 @@ int handle_scheduled_downtime_by_id(unsigned long);
 
 int check_pending_flex_host_downtime(struct host *);
 int check_pending_flex_service_downtime(struct service *);
+int is_host_in_pending_flex_downtime(struct host *);
+int is_service_in_pending_flex_downtime(struct service *);
 
 int check_for_expired_downtime(void);
 #endif

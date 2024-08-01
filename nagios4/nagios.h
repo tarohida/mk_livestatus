@@ -17,8 +17,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ************************************************************************/
 
-#ifndef _NAGIOS_H
-#define _NAGIOS_H
+#ifndef NAGIOS_NAGIOS_H_INCLUDED
+#define NAGIOS_NAGIOS_H_INCLUDED
 
 #ifndef NSCORE
 # define NSCORE
@@ -30,7 +30,6 @@
 #include "locations.h"
 #include "objects.h"
 #include "macros.h"
-#include "config.h"
 
 /*
  * global variables only used in the core. Reducing this list would be
@@ -120,6 +119,9 @@ extern int host_freshness_check_interval;
 extern int auto_rescheduling_interval;
 extern int auto_rescheduling_window;
 
+extern int enable_soft_host_recovery;
+extern int enable_soft_service_recovery;
+
 extern int check_orphaned_services;
 extern int check_orphaned_hosts;
 extern int check_service_freshness;
@@ -187,6 +189,12 @@ extern int debug_verbosity;
 extern unsigned long max_debug_file_size;
 
 extern int allow_empty_hostgroup_assignment;
+
+extern int host_down_disable_service_checks;
+extern int service_skip_check_dependency_status;
+extern int service_skip_check_parent_status;
+extern int service_skip_check_host_down_status;
+extern int host_skip_check_dependency_status;
 
 extern time_t last_program_stop;
 extern time_t event_start;
@@ -423,16 +431,9 @@ NAGIOS_BEGIN_DECL
 #define normal_check_window(o) ((time_t)(o->check_interval * interval_length))
 #define retry_check_window(o) ((time_t)(o->retry_interval * interval_length))
 #define check_window(o) \
-	((!o->current_state && o->state_type == SOFT_STATE) ? \
+	((o->current_state && o->state_type == SOFT_STATE) ? \
 		retry_check_window(o) : \
 		normal_check_window(o))
-
-/** Nerd subscription type */
-struct nerd_subscription {
-	int sd;
-	struct nerd_channel *chan;
-	char *format; /* requested format (macro string) for this subscription */
-};
 
 /******************** FUNCTIONS **********************/
 extern int set_loadctl_options(char *opts, unsigned int len);
@@ -444,6 +445,15 @@ extern const char *state_type_name(int state_type);
 extern const char *check_type_name(int check_type);
 extern const char *check_result_source(check_result *cr);
 
+#ifdef ENABLE_NERD
+
+/** Nerd subscription type */
+struct nerd_subscription {
+	int sd;
+	struct nerd_channel *chan;
+	char *format; /* requested format (macro string) for this subscription */
+};
+
 /*** Nagios Event Radio Dispatcher functions ***/
 extern int nerd_init(void);
 extern int nerd_mkchan(const char *name, const char *description, int (*handler)(int, void *), unsigned int callbacks);
@@ -451,6 +461,8 @@ extern int nerd_cancel_subscriber(int sd);
 extern int nerd_get_channel_id(const char *chan_name);
 extern objectlist *nerd_get_subscriptions(int chan_id);
 extern int nerd_broadcast(unsigned int chan_id, void *buf, unsigned int len);
+
+#endif
 
 /*** Query Handler functions, types and macros*/
 typedef int (*qh_handler)(int, char *, unsigned int);
@@ -484,6 +496,7 @@ extern void handle_sigxfsz(int);				/* handle SIGXFSZ */
 int daemon_init(void);				     		/* switches to daemon mode */
 int drop_privileges(char *, char *);				/* drops privileges before startup */
 void display_scheduling_info(void);				/* displays service check scheduling information */
+void init_main_cfg_vars(int); /* Initialize the non-shared main configuration variables */
 
 
 /**** Event Queue Functions ****/
@@ -500,10 +513,10 @@ void adjust_timestamp_for_time_change(time_t, time_t, unsigned long, time_t *); 
 
 
 /**** IPC Functions ****/
-int process_check_result_queue(char *);
-int process_check_result_file(char *);
+int process_check_result_queue(const char *);
+int process_check_result_file(const char *);
 int process_check_result(check_result *);
-int delete_check_result_file(char *);
+int delete_check_result_file(const char *);
 int init_check_result(check_result *);
 int free_check_result(check_result *);                  	/* frees memory associated with a host/service check result */
 int parse_check_output(char *, char **, char **, char **, int, int);
@@ -512,6 +525,7 @@ int close_command_file(void);					/* closes and deletes the external command fil
 
 
 /**** Monitoring/Event Handler Functions ****/
+int check_service_parents(service *svc);			/* checks service parents */
 int check_service_dependencies(service *, int);          	/* checks service dependencies */
 int check_host_dependencies(host *, int);                	/* checks host dependencies */
 void check_for_orphaned_services(void);				/* checks for orphaned services */
@@ -528,9 +542,9 @@ int my_system_r(nagios_macros *mac, char *, int, int *, double *, char **, int);
 void check_for_service_flapping(service *, int, int);	      /* determines whether or not a service is "flapping" between states */
 void check_for_host_flapping(host *, int, int, int);		/* determines whether or not a host is "flapping" between states */
 void set_service_flap(service *, double, double, double, int);	/* handles a service that is flapping */
-void clear_service_flap(service *, double, double, double);	/* handles a service that has stopped flapping */
+void clear_service_flap(service *, double, double, double, int);	/* handles a service that has stopped flapping */
 void set_host_flap(host *, double, double, double, int);		/* handles a host that is flapping */
-void clear_host_flap(host *, double, double, double);		/* handles a host that has stopped flapping */
+void clear_host_flap(host *, double, double, double, int);		/* handles a host that has stopped flapping */
 void enable_flap_detection_routines(void);			/* enables flap detection on a program-wide basis */
 void disable_flap_detection_routines(void);			/* disables flap detection on a program-wide basis */
 void enable_host_flap_detection(host *);			/* enables flap detection for a particular host */
@@ -545,7 +559,6 @@ void handle_service_flap_detection_disabled(service *);		/* handles the details 
 int check_host_check_viability(host *, int, int *, time_t *);
 int adjust_host_check_attempt(host *, int);
 int determine_host_reachability(host *);
-int process_host_check_result(host *, int, char *, int, int, int, unsigned long);
 int perform_on_demand_host_check(host *, int *, int, int, unsigned long);
 int execute_sync_host_check(host *);
 int run_scheduled_host_check(host *, int, double);
@@ -564,7 +577,7 @@ int handle_async_service_check_result(service *, check_result *);
 int handle_host_state(host *);               			/* top level host state handler */
 
 
-/**** Common Check Fucntions *****/
+/**** Common Check Functions *****/
 int reap_check_results(void);
 
 
@@ -580,9 +593,11 @@ int obsessive_compulsive_host_check_processor(host *);		/* distributed monitorin
 int handle_service_event(service *);				/* top level service event logic */
 int run_service_event_handler(nagios_macros *mac, service *);			/* runs the event handler for a specific service */
 int run_global_service_event_handler(nagios_macros *mac, service *);		/* runs the global service event handler */
+int check_service_event_handler_viability(int, service *);		/* checks if service event handler can be run */
 int handle_host_event(host *);					/* top level host event logic */
 int run_host_event_handler(nagios_macros *mac, host *);				/* runs the event handler for a specific host */
 int run_global_host_event_handler(nagios_macros *mac, host *);			/* runs the global host event handler */
+int check_host_event_handler_viability(int, host *);			/* checks if host event handler can be run */
 
 
 /**** Notification Functions ****/
@@ -620,6 +635,23 @@ void my_system_sighandler(int);				/* handles timeouts when executing commands v
 char *get_next_string_from_buf(char *buf, int *start_index, int bufsize);
 int compare_strings(char *, char *);                    /* compares two strings for equality */
 char *escape_newlines(char *);
+#ifdef DETECT_RLIMIT_PROBLEM
+void rlimit_problem_detection(int);
+#endif
+/**
+ * Unescapes newlines and backslashes in a check result output string read from
+ * a source that uses newlines as a delimiter (e.g., files in the checkresults
+ * spool dir, or the command pipe).
+ * @note: There is an unescape_newlines() in cgi/cgiutils.c that unescapes more
+ * than '\\' and '\n' in place. Since this function is specifically intended
+ * for processing escaped plugin output, we'll use a more specific name to
+ * avoid confusion and conflicts.
+ * @param rawbuf Input string tp unescape.
+ * @return An unescaped copy of rawbuf in a newly allocated string, or NULL if
+ * rawbuf is NULL or no memory could be allocated for the new string.
+ */
+char *unescape_check_result_output(const char *rawbuf);
+
 int contains_illegal_object_chars(char *);		/* tests whether or not an object name (host, service, etc.) contains illegal characters */
 int my_rename(char *, char *);                          /* renames a file - works across filesystems */
 int my_fcopy(char *, char *);                           /* copies a file - works across filesystems */
@@ -639,6 +671,7 @@ int is_daterange_single_day(daterange *);
 time_t calculate_time_from_weekday_of_month(int, int, int, int);	/* calculates midnight time of specific (3rd, last, etc.) weekday of a particular month */
 time_t calculate_time_from_day_of_month(int, int, int);	/* calculates midnight time of specific (1st, last, etc.) day of a particular month */
 void get_next_valid_time(time_t, time_t *, timeperiod *);	/* get the next valid time in a time period */
+time_t reschedule_within_timeperiod(time_t, timeperiod*, time_t);
 time_t get_next_log_rotation_time(void);	     	/* determine the next time to schedule a log rotation */
 int dbuf_init(dbuf *, int);
 int dbuf_free(dbuf *);
@@ -744,6 +777,8 @@ void enable_contact_host_notifications(contact *);      /* enables host notifica
 void disable_contact_host_notifications(contact *);     /* disables host notifications for a specific contact */
 void enable_contact_service_notifications(contact *);   /* enables service notifications for a specific contact */
 void disable_contact_service_notifications(contact *);  /* disables service notifications for a specific contact */
+void clear_host_flapping_state(host *);					/* clears the flapping state for a specific host */
+void clear_service_flapping_state(service *);			/* clears the flapping state for a specific service */
 
 int launch_command_file_worker(void);
 int shutdown_command_file_worker(void);

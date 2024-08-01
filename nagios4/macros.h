@@ -19,8 +19,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  ************************************************************************/
 
-#ifndef _MACROS_H
-#define _MACROS_H
+#ifndef NAGIOS_MACROS_H_INCLUDED
+#define NAGIOS_MACROS_H_INCLUDED
 
 #include "common.h"
 #include "objects.h"
@@ -38,7 +38,7 @@
 
 #define MAX_USER_MACROS				256	/* maximum number of $USERx$ macros */
 
-#define MACRO_X_COUNT				156	/* size of macro_x[] array */
+#define MACRO_X_COUNT				163	/* size of macro_x[] array */
 
 NAGIOS_BEGIN_DECL
 
@@ -214,9 +214,16 @@ typedef struct nagios_macros nagios_macros;
 #define MACRO_LASTHOSTSTATEID                   150
 #define MACRO_LASTSERVICESTATE                  151
 #define MACRO_LASTSERVICESTATEID                152
-#define MACRO_HOSTVALUE                         153
-#define MACRO_SERVICEVALUE                      154
-#define MACRO_PROBLEMVALUE                      155
+#define MACRO_HOSTIMPORTANCE                    153
+#define MACRO_SERVICEIMPORTANCE                 154
+#define MACRO_HOSTANDSERVICESIMPORTANCE         155
+#define MACRO_HOSTGROUPMEMBERADDRESSES          156
+#define MACRO_HOSTINFOURL                       157
+#define MACRO_SERVICEINFOURL                    158
+#define MACRO_HOSTNOTIFICATIONENABLED           159
+#define MACRO_SERVICENOTIFICATIONENABLED        160
+#define MACRO_HOSTNOTIFICATIONPERIOD            161
+#define MACRO_SERVICENOTIFICATIONPERIOD         162
 
 
 /************* MACRO CLEANING OPTIONS *****************/
@@ -275,6 +282,8 @@ int grab_servicegroup_macros_r(nagios_macros *mac, servicegroup *);
 int grab_hostgroup_macros_r(nagios_macros *mac, hostgroup *);
 int grab_contact_macros_r(nagios_macros *mac, contact *);
 
+int grab_argv_macros_r(nagios_macros *mac, char *check_command);
+
 int grab_macro_value_r(nagios_macros *mac, char *, char **, int *, int *);
 int grab_macrox_value_r(nagios_macros *mac, int, char *, char *, char **, int *);
 int grab_custom_macro_value_r(nagios_macros *mac, char *, char *, char *, char **);
@@ -316,6 +325,7 @@ int clear_servicegroup_macros_r(nagios_macros *mac);
 int clear_contact_macros_r(nagios_macros *mac);
 int clear_contactgroup_macros_r(nagios_macros *mac);
 int clear_summary_macros_r(nagios_macros *mac);
+int clear_datetime_macros_r(nagios_macros *mac);
 
 
 #ifndef NSCGI
