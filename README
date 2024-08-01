@@ -5,6 +5,13 @@ We have created this repo under the permissions granted by the GPLv2 license
 used by original author. It exists for our internal build processes and ensure
 access to the code is maintained even if upstream goes away.
 
+# Caution
+
+This module work with nagios above 4.5.0.
+
+With below 4.4.x, It may does not work.
+
+
 # How to build on Rocky Linux 9
 
 ```
@@ -16,12 +23,12 @@ Rocky Linux release 9.3 (Blue Onyx)
 dnf group install "Development Tools" -y
 dnf config-manager --set-enabled crb -y
 dnf install epel-release -y
-dnf install rrdtool-devel boost-devel libstdc++-static-11.4.1-2.1.el9.x86_64 -y
+dnf install rrdtool-devel boost-devel libstdc++-static -y
 autoreconf && ./configure --with-nagios4 && make -j8
 make install
 ```
 
-# How to integrate with Nagios (4.4.14)
+# How to integrate with Nagios (4.5.3)
 
 Add following line to /usr/local/nagios/etc/nagios.cfg
 
